@@ -1,17 +1,39 @@
 import '../../entities/todo_entity.dart';
 
-class ToDoState {
-  const ToDoState({
-    this.todoList = const <TodoEntity>[],
-  });
+abstract class ToDoState {}
 
-  final List<TodoEntity> todoList;
+class ToDoInitialState extends ToDoState {}
 
-  ToDoState copyWith({
-    List<TodoEntity>? todoList,
-  }) {
-    return ToDoState(
-      todoList: todoList ?? this.todoList,
-    );
-  }
+class ToDoLoadingState extends ToDoState {}
+
+class ToDoItemAddedState extends ToDoState {
+  final List<TodoEntity> newList;
+
+  ToDoItemAddedState({
+    required this.newList,
+  }) : super();
+}
+
+class ToDoAllItemAddedState extends ToDoState {
+  final List<TodoEntity> newList;
+
+  ToDoAllItemAddedState({
+    required this.newList,
+  }) : super();
+}
+
+class ToDoItemUpdatedState extends ToDoState {
+  final List<TodoEntity> newList;
+
+  ToDoItemUpdatedState({
+    required this.newList,
+  }) : super();
+}
+
+class ToDoItemRemovedState extends ToDoState {
+  final List<TodoEntity> newList;
+
+  ToDoItemRemovedState({
+    required this.newList,
+  }) : super();
 }

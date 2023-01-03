@@ -6,27 +6,24 @@ import '../state/todo/todo_bloc.dart';
 import '../state/todo/todo_events.dart';
 import '../state/todo/todo_state.dart';
 
-class TodoListScreen extends StatefulWidget {
-  const TodoListScreen({super.key});
-
-  @override
-  State<TodoListScreen> createState() => _TodoListScreenState();
-}
-
-class _TodoListScreenState extends State<TodoListScreen> {
+class TodoListScreen extends StatelessWidget {
   final _textEditingController = TextEditingController();
 
-  void addItem() {
-    context.read<TodoBloc>().add(
-          AddItem(
-            title: _textEditingController.text,
-          ),
-        );
+  final TodoBloc todoBloc = TodoBloc();
+
+  TodoListScreen({super.key});
+
+  void addItem(BuildContext context) {
+    todoBloc.add(
+      AddItemEvent(
+        title: _textEditingController.text,
+      ),
+    );
     _textEditingController.clear();
     Navigator.pop(context);
   }
 
-  void _openAddModal() {
+  void _openAddModal(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
@@ -43,7 +40,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 ),
               ),
               ElevatedButton(
-                onPressed: addItem,
+                onPressed: () => addItem(context),
                 child: const Text('add to do'),
               ),
               SizedBox(
@@ -57,60 +54,78 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   void _onChanged(bool? value, TodoEntity item) {
-    context.read<TodoBloc>().add(
-          UpdateItem(
-            item: item.copyWith(
-              isDone: value ?? false,
-            ),
-          ),
-        );
+    todoBloc.add(
+      UpdateItemEvent(
+        item: item.copyWith(
+          isDone: value ?? false,
+        ),
+      ),
+    );
   }
 
   Future<bool?> _confirmDismiss(
     DismissDirection direction,
     String id,
   ) async {
-    context.read<TodoBloc>().add(
-          RemoveItem(id: id),
-        );
+    todoBloc.add(
+      RemoveItemEvent(id: id),
+    );
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Todo App'),
-      ),
-      body: BlocBuilder<TodoBloc, ToDoState>(
-        builder: (context, state) {
-          return ListView.separated(
-            padding: const EdgeInsets.all(12),
-            itemCount: state.todoList.length,
-            separatorBuilder: (_, i) => const Divider(),
-            itemBuilder: (_, i) => Dismissible(
-              key: ValueKey(i),
-              confirmDismiss: (_) => _confirmDismiss(
-                _,
-                state.todoList[i].id,
-              ),
-              child: ListTile(
-                title: Text(state.todoList[i].title),
-                trailing: Checkbox(
-                  value: state.todoList[i].isDone,
-                  onChanged: (_) => _onChanged(
-                    _,
-                    state.todoList[i],
+    return BlocProvider(
+      create: (_) => todoBloc,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Todo App'),
+        ),
+        body: BlocBuilder<TodoBloc, ToDoState>(
+          builder: (context, state) {
+            var todoList = <TodoEntity>[];
+
+            if (state is ToDoItemAddedState) {
+              todoList = state.newList;
+            }
+            if (state is ToDoItemRemovedState) {
+              todoList = state.newList;
+            }
+            if (state is ToDoItemUpdatedState) {
+              todoList = state.newList;
+            }
+            if (state is ToDoAllItemAddedState) {
+              todoList = state.newList;
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.all(12),
+              itemCount: todoBloc.todoList.length,
+              separatorBuilder: (_, i) => const Divider(),
+              itemBuilder: (_, i) => Dismissible(
+                key: ValueKey(i),
+                confirmDismiss: (_) => _confirmDismiss(
+                  _,
+                  todoBloc.todoList[i].id,
+                ),
+                child: ListTile(
+                  title: Text(todoList[i].title),
+                  trailing: Checkbox(
+                    value: todoList[i].isDone,
+                    onChanged: (_) => _onChanged(
+                      _,
+                      todoList[i],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAddModal,
-        child: const Icon(Icons.add),
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _openAddModal(context),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
